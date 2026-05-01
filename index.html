@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
+    <meta name="theme-color" content="#d6249f">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>InstaLanches - Cardápio Premium</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+    
+    <script src="./assets/js/config/tailwind.config.js?v=20260109"></script>
+    
+    <script src="./assets/js/core/viewport.js?v=20260109"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    
+    <style id="critical-modal-safety">
+        /* Segurança de deploy: se o CSS externo não carregar, os modais não aparecem como conteúdo da página. */
+        .modal-wrapper { position: fixed; inset: 0; z-index: 10010; visibility: hidden; pointer-events: none; }
+        .modal-wrapper.show { visibility: visible; pointer-events: auto; }
+    </style>
+
+    <link rel="stylesheet" href="./assets/css/app.css?v=20260109">
+
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <script src="./assets/js/core/supabase.client.js?v=20260109"></script>
+</head>
+<body class="text-gray-800 font-sans relative w-full">
+    
+    <div id="statusBanner" style="background:#121212;color:white;padding-top: max(6px, env(safe-area-inset-top)); padding-bottom: 6px; font-size:14px;overflow:hidden;display:flex;align-items:center;">
+        <div id="marqueeText" class="marquee-animation" style="font-weight:bold; letter-spacing:1px; text-transform:uppercase;">
+            Carregando horário...
+        </div>
+    </div>
+
+    <header class="glass-header shadow-sm border-b border-gray-200" id="main-header">
+        <div class="bg-white px-4 py-1 sm:py-2 relative shadow-sm rounded-b-[2rem]">
+            <div class="max-w-5xl mx-auto flex items-center justify-between gap-3">
+                <div class="w-11 shrink-0 sm:w-12"></div>
+                <div class="flex-1 flex justify-center">
+                    <img data-brand-logo src="https://res.cloudinary.com/de9bsqp2z/image/upload/v1773272375/logo_insta_lanches_instagram_transparente_rk9lxq.png" alt="Logo InstaLanches" decoding="async" class="app-brand-logo h-[55px] sm:h-[65px] object-contain select-none pointer-events-none drop-shadow-sm scale-[1.9]">
+                </div>
+                <button onclick="abrirRastreio()" id="btn-rastreio-header" aria-label="Notificações e Rastreio" class="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white text-gray-400 border border-gray-200 hover:text-insta-pink transition flex items-center justify-center relative shadow-sm shrink-0 cursor-pointer">
+                    <i class="fas fa-bell text-lg"></i>
+                    <span id="notif-dot" class="absolute top-[8px] right-[10px] w-2.5 h-2.5 bg-red-500 rounded-full border border-white hidden animate-pulse"></span>
+                </button>
+            </div>
+        </div>
+        <nav class="nav-scroll overflow-x-auto whitespace-nowrap px-4 py-2 sm:py-2.5 flex gap-4 sm:gap-6 max-w-5xl mx-auto" id="menu-categorias"></nav>
+    </header>
+
+    <div id="main-scroll-area">
+        
+        <section id="home-experience" class="max-w-5xl mx-auto px-4 pt-4 pb-1 w-full">
+            <div class="app-search-card">
+                <div class="app-search-icon"><i class="fas fa-magnifying-glass"></i></div>
+                <input id="busca-cardapio" type="search" placeholder="Buscar hambúrguer, pastel, bebida..." autocomplete="off" oninput="filtrarCardapioCliente()" aria-label="Buscar produto no cardápio">
+                <button type="button" id="btn-limpar-busca" onclick="limparBuscaCardapio()" aria-label="Limpar busca" class="hidden"><i class="fas fa-xmark"></i></button>
+            </div>
+
+            <section id="promocoes-home" class="home-promo-section hidden">
+                <div class="home-section-title">
+                    <div>
+                        <p>Ofertas especiais</p>
+                        <h2>Promoções de hoje</h2>
+                    </div>
+                    <span><i class="fas fa-bolt"></i> Economize pedindo direto</span>
+                </div>
+                <div id="promocoes-publicas" class="promo-carousel custom-scroll"></div>
+            </section>
+        </section>
+
+        <main class="max-w-5xl mx-auto px-4 py-4 mt-2 pb-8 w-full" id="container-cardapio"></main>
+
+        <footer class="relative w-full" style="background:#0b0b0b;color:white;text-align:center;font-family:Poppins; padding: 30px 16px calc(110px + 3vh + env(safe-area-inset-bottom));">
+            <img data-brand-logo src="https://res.cloudinary.com/de9bsqp2z/image/upload/v1773272375/logo_insta_lanches_instagram_transparente_rk9lxq.png" alt="Logo da loja" style="width:80px;margin:auto;opacity:.95;filter:drop-shadow(0 5px 12px rgba(0,0,0,.5));">
+            <div style="margin-top:12px;font-size:13px;color:#cbd5e1;">📍 R. Rio de Janeiro, 295 • Caucaia - CE</div>
+            <div style="max-width:320px; height:100px; margin: 12px auto; border-radius: 12px; overflow: hidden; border: 1px solid #1f2937; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);">
+                <iframe src="https://maps.google.com/maps?q=R.%20Rio%20de%20Janeiro,%20295,%20Caucaia%20-%20CE&t=&z=15&ie=UTF8&iwloc=&output=embed" width="100%" height="100" style="border:0; filter: invert(90%) hue-rotate(180deg) contrast(1.1);" allowfullscreen="" loading="lazy" title="Localização InstaLanches"></iframe>
+            </div>
+            <div style="margin-top:12px;font-size:14px;font-weight:600;">📞 (85) 99155-8671</div>
+            <div style="margin-top:10px;font-size:12px;color:#9ca3af;line-height:1.6;">Abertos das 17:00 ás 23:00 horas <br> Fechado • Toda Quarta-feira </div>
+            <div style="margin-top:20px; display: flex; align-items: center; justify-content: center; gap: 8px; color:#6b7280; font-size:11px;">
+                <span>© 2024 <span data-brand-name>InstaLanches</span> • Todos os direitos reservados</span>
+                <i class="fas fa-user-shield cursor-pointer" onclick="abrirAdminAuth(event)" aria-label="Painel Admin" style="font-size: 13px; opacity: 0.7; margin-left: 4px;"></i>
+            </div>
+        </footer>
+    </div>
+
+    <!-- DOCK UNIVERSAL E MODAIS -->
+    <div id="barra-flutuante-carrinho" class="fixed bottom-0 left-0 w-full z-[10015] pointer-events-none transform translate-y-full transition-transform duration-500 ease-out flex flex-col justify-end">
+        <div class="w-full bg-gradient-to-t from-[#f8f9fa] via-[#f8f9fa]/95 to-transparent pt-8 px-4 flex justify-center" style="padding-bottom: calc(3vh + 16px + env(safe-area-inset-bottom)); pointer-events: none;">
+            <div id="cart-draggable-btn" class="relative flex items-center justify-between bg-white/90 backdrop-blur-xl rounded-2xl p-4 sm:p-5 shadow-[0_20px_40px_rgba(0,0,0,0.15)] border border-gray-200/50 pointer-events-auto w-full max-w-[340px] cursor-grab active:cursor-grabbing transition-transform">
+                <div class="flex flex-col text-left leading-none pointer-events-none select-none">
+                    <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Total</span>
+                    <span id="floating-total" class="text-xl sm:text-2xl font-black text-gray-800 tracking-tight">R$ 0,00</span>
+                </div>
+                <div class="flex items-center gap-3 pointer-events-none select-none bg-gray-50/80 px-4 py-2.5 rounded-xl border border-gray-100 shadow-sm">
+                    <span class="text-sm sm:text-base font-bold text-gray-800 tracking-wide" id="txt-ver-pedido-btn">Ver Pedido</span>
+                    <div class="bg-gradient-to-br from-insta-orange to-insta-pink text-white text-xs font-black rounded-lg w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center shadow-md">
+                        <span id="cart-count">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-opcoes" class="modal-wrapper flex items-center justify-center p-4 z-[10060]">
+        <div class="modal-overlay" onclick="fecharModal('modal-opcoes')"></div>
+        <div class="modal-content pb-safe-modal bg-white w-[95%] sm:w-[450px] rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-7 shadow-2xl max-h-[90dvh] flex flex-col relative border border-insta-pink/10">
+            <button onclick="fecharModal('modal-opcoes')" class="absolute top-5 right-5 text-gray-400 hover:text-gray-800 bg-gray-100 rounded-full w-8 h-8 flex items-center justify-center transition z-10"><i class="fas fa-times"></i></button>
+            <div class="text-center mb-6 pt-2 shrink-0">
+                <div class="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-3 shadow-inner">
+                    <i class="fas fa-hamburger text-insta-orange text-2xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-800 tracking-tight leading-tight" id="opcoes-nome-produto">Nome</h3>
+                <p class="text-xs text-gray-500 mt-1 font-semibold uppercase tracking-wider">Escolha o seu Pão</p>
+            </div>
+            <input type="hidden" id="opcoes-id-produto">
+            <div class="mb-2 overflow-y-auto custom-scroll flex-1 pr-1 pb-4">
+                <div class="space-y-3">
+                    <label class="relative flex items-center p-3 sm:p-4 cursor-pointer rounded-2xl border-2 border-gray-100 bg-white hover:bg-gray-50 transition-all duration-200 group">
+                        <input type="radio" name="tipo_pao" value="Pão Bola" data-adicional="0" class="peer sr-only" checked>
+                        <div class="absolute inset-0 rounded-2xl border-2 border-transparent peer-checked:border-insta-pink peer-checked:bg-pink-50/40 transition-all pointer-events-none"></div>
+                        <div class="relative z-10 flex-1 pl-2">
+                            <h4 class="font-bold text-gray-800 text-sm sm:text-base peer-checked:text-insta-pink transition-colors">Pão Bola</h4>
+                            <p class="text-[11px] text-gray-400 uppercase tracking-widest mt-0.5 font-semibold">Tradicional</p>
+                        </div>
+                        <div class="relative z-10 font-bold text-gray-500 text-sm mr-3 peer-checked:text-insta-pink">Grátis</div>
+                        <div class="relative z-10 w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 border-gray-300 flex items-center justify-center peer-checked:border-insta-pink peer-checked:bg-insta-pink transition-all"></div>
+                    </label>
+                    <label class="relative flex items-center p-3 sm:p-4 cursor-pointer rounded-2xl border-2 border-gray-100 bg-white hover:bg-gray-50 transition-all duration-200 group">
+                        <input type="radio" name="tipo_pao" value="Pão Árabe" data-adicional="1" class="peer sr-only">
+                        <div class="absolute inset-0 rounded-2xl border-2 border-transparent peer-checked:border-insta-pink peer-checked:bg-pink-50/40 transition-all pointer-events-none"></div>
+                        <div class="relative z-10 flex-1 pl-2">
+                            <h4 class="font-bold text-gray-800 text-sm sm:text-base peer-checked:text-insta-pink transition-colors">Pão Árabe</h4>
+                            <p class="text-[11px] text-insta-orange uppercase tracking-widest mt-0.5 font-semibold">Especial</p>
+                        </div>
+                        <div class="relative z-10 font-bold text-insta-purple text-sm mr-3">+ R$ 1,00</div>
+                        <div class="relative z-10 w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 border-gray-300 flex items-center justify-center peer-checked:border-insta-pink peer-checked:bg-insta-pink transition-all"></div>
+                    </label>
+                </div>
+            </div>
+            <button onclick="confirmarOpcoesEAdicionar()" class="w-full gradient-bg text-white font-bold py-4 rounded-2xl shadow-xl hover:opacity-90 transition flex justify-center items-center gap-2 active:scale-95 text-base sm:text-lg shrink-0 mt-2"> <i class="fas fa-cart-plus text-xl"></i> Adicionar ao Pedido</button>
+        </div>
+    </div>
+
+    <div id="cart-modal" class="modal-wrapper flex items-center justify-center p-4 z-[10050]">
+        <div class="modal-overlay" onclick="fecharModal('cart-modal')"></div>
+        <div class="modal-content pb-safe-modal bg-[#f3f4f6] w-full sm:w-[480px] rounded-[2.5rem] p-6 sm:p-7 shadow-2xl max-h-[90dvh] flex flex-col relative overflow-hidden">
+            <div class="flex justify-between items-center mb-4 pt-2 shrink-0 w-full relative z-20 px-1 bg-transparent">
+                <div class="flex flex-col text-left">
+                    <h2 class="text-2xl sm:text-3xl font-display tracking-wide uppercase italic gradient-text pb-1 -ml-0.5" style="transform: skewX(-8deg);">Seu Pedido</h2>
+                    <p class="text-[10px] sm:text-xs text-gray-500 font-bold uppercase tracking-wider">Confira os Itens</p>
+                </div>
+                <button type="button" onclick="fecharModal('cart-modal')" class="text-gray-400 hover:text-gray-800 bg-transparent text-xl w-8 h-8 flex items-center justify-center transition z-20"><i class="fas fa-times"></i></button>
+            </div>
+
+            <div class="overflow-y-auto custom-scroll flex-1 pr-1 pb-48 relative">
+
+                <div class="bg-white rounded-[1.5rem] p-4 shadow-sm border border-gray-100/80 mb-4 mt-2 flex flex-col">
+                    <h3 class="text-xs font-bold text-gray-800 mb-3 flex items-center gap-2 uppercase tracking-wider shrink-0"><i class="fas fa-utensils text-insta-orange text-sm"></i> Itens Adicionados</h3>
+                    <div id="cart-items" class="space-y-3 overflow-y-auto custom-scroll pr-2 pb-1" style="max-height: 25vh;"></div>
+                </div>
+                
+                <div class="bg-white rounded-[1.5rem] p-4 shadow-sm border border-gray-100/80 mb-5 space-y-2">
+                    <div class="flex justify-between text-gray-500 text-sm font-semibold"><span>Subtotal</span><span id="cart-subtotal" class="text-gray-700">R$ 0,00</span></div>
+                    <div class="flex justify-between text-gray-500 text-sm font-semibold"><span>Taxa de Entrega</span><span id="cart-taxa" class="text-gray-700">R$ 0,00</span></div>
+                    <div id="cart-taxa-pagamento-linha" class="flex justify-between text-gray-500 text-sm font-semibold hidden"><span>Taxa Cartão (5%)</span><span id="cart-taxa-pagamento" class="text-gray-700">R$ 0,00</span></div>
+                    
+                    <div class="flex justify-between items-center pt-3 border-t border-gray-100 border-dashed mt-2">
+                        <span class="font-black text-gray-800 text-base uppercase tracking-wider">Total a Pagar</span>
+                        <span class="text-2xl font-black text-insta-pink tracking-tight drop-shadow-sm" id="cart-total">R$ 0,00</span>
+                    </div>
+                </div>
+
+                <form id="checkout-form" class="space-y-4 relative group" onsubmit="processarCheckout(event)">
+                    <div class="bg-white rounded-[1.5rem] p-4 shadow-sm border border-gray-100/80">
+                        <h3 class="text-xs font-bold text-gray-800 mb-3 flex items-center gap-2 uppercase tracking-wider"><i class="fas fa-user-circle text-insta-purple text-sm"></i> Seus Dados</h3>
+                        <div class="space-y-3">
+                            <div class="relative">
+                                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest absolute -top-2 left-3 bg-white px-1">Seu Nome</label>
+                                <input type="text" id="nome-cliente" placeholder="Como podemos te chamar?" class="w-full bg-transparent border-2 border-gray-100 rounded-2xl py-3 px-4 outline-none focus:border-insta-pink focus:bg-pink-50/10 transition font-semibold text-gray-800 text-sm sm:text-base" required>
+                            </div>
+                            <div class="relative">
+                                <label class="text-[10px] font-bold text-success-green uppercase tracking-widest absolute -top-2 left-3 bg-white px-1"><i class="fab fa-whatsapp mr-1"></i> WhatsApp</label>
+                                <input type="tel" id="whatsapp-cliente" placeholder="(DDD) 90000-0000" class="w-full bg-transparent border-2 border-gray-100 rounded-2xl py-3 px-4 outline-none focus:border-success-green focus:bg-green-50/10 transition font-semibold text-gray-800 text-sm sm:text-base" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-[1.5rem] p-4 shadow-sm border border-gray-100/80" id="box-tipo-pedido">
+                        <h3 class="text-xs font-bold text-gray-800 mb-3 flex items-center gap-2 uppercase tracking-wider"><i class="fas fa-motorcycle text-success-green text-sm"></i> Onde deseja receber?</h3>
+                        <div class="relative mt-2">
+                            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest absolute -top-2 left-3 bg-white px-1">Tipo de Pedido</label>
+                            <select id="tipo-pedido" class="w-full bg-transparent border-2 border-gray-100 rounded-2xl py-3.5 pl-4 pr-10 outline-none focus:border-insta-pink transition appearance-none font-semibold text-gray-800 text-sm sm:text-base" required onchange="mudarTipoPedido()">
+                                <option value="" disabled selected>Selecione uma opção...</option>
+                                <option value="entrega">🛵 Entregar no meu Endereço</option>
+                                <option value="retirada">🚶 Vou Retirar no Local</option>
+                            </select>
+                            <i class="fas fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+                        </div>
+                        
+                        <div id="area-entrega-resumo" class="hidden mt-4 pt-2 border-t border-gray-100 transition-all space-y-4">
+                            <div class="space-y-1.5">
+                                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-white px-1 relative top-2 left-2 z-10">Bairro / Taxa</label>
+                                <div class="relative">
+                                    <select id="bairro-select" class="w-full bg-transparent border-2 border-gray-100 rounded-2xl py-3.5 pl-4 pr-10 outline-none focus:border-insta-pink transition appearance-none font-semibold text-gray-800 text-sm sm:text-base" onchange="calcularTotal()">
+                                        <option value="" data-taxa="0">Selecione seu Bairro...</option>
+                                    </select>
+                                    <i class="fas fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none mt-1"></i>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-3">
+                                <div class="col-span-2 space-y-1.5">
+                                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-white px-1 relative top-2 left-2 z-10">Rua</label>
+                                    <input type="text" id="rua-input" placeholder="Ex: Rua das Flores" class="w-full bg-transparent border-2 border-gray-100 rounded-2xl py-3.5 px-4 outline-none focus:border-insta-pink transition font-semibold text-gray-800 text-sm sm:text-base">
+                                </div>
+                                <div class="space-y-1.5">
+                                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-white px-1 relative top-2 left-2 z-10">Número</label>
+                                    <input type="text" id="numero-input" placeholder="Ex: 123" class="w-full bg-transparent border-2 border-gray-100 rounded-2xl py-3.5 px-4 outline-none focus:border-insta-pink transition font-semibold text-gray-800 text-sm sm:text-base">
+                                </div>
+                            </div>
+                            <div class="space-y-1.5">
+                                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-white px-1 relative top-2 left-2 z-10">Referência</label>
+                                <input type="text" id="referencia-input" placeholder="Ex: Próximo ao mercado..." class="w-full bg-transparent border-2 border-gray-100 rounded-2xl py-3.5 px-4 outline-none focus:border-insta-pink transition font-semibold text-gray-800 text-sm sm:text-base">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-[1.5rem] p-4 shadow-sm border border-gray-100/80">
+                        <h3 class="text-xs font-bold text-gray-800 mb-3 flex items-center gap-2 uppercase tracking-wider"><i class="fas fa-wallet text-gray-400 text-sm"></i> Pagamento</h3>
+                        <div class="relative mt-2">
+                            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest absolute -top-2 left-3 bg-white px-1">Forma de Pagamento</label>
+                            <select id="pagamento" class="w-full bg-transparent border-2 border-gray-100 rounded-2xl py-3.5 pl-4 pr-10 outline-none focus:border-insta-pink transition appearance-none font-semibold text-gray-800 text-sm sm:text-base" required onchange="toggleTroco()">
+                                <option value="" disabled selected>Como vai pagar?</option>
+                                <option value="Pix">📱 Pix (Chave no WhatsApp)</option>
+                                <option value="Cartão">💳 Cartão (Acresce 5%)</option>
+                                <option value="Dinheiro">💵 Dinheiro</option>
+                            </select>
+                            <i class="fas fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+                        </div>
+                        <div id="troco-container" class="hidden mt-4 transition-all">
+                            <div class="relative">
+                                <label class="text-[10px] font-bold text-success-green uppercase tracking-widest absolute -top-2 left-3 bg-white px-1">Troco para quanto?</label>
+                                <input type="number" id="troco" placeholder="Ex: 50" class="w-full bg-green-50/20 border-2 border-green-100 rounded-2xl py-3.5 px-4 outline-none focus:border-success-green focus:bg-green-50/40 transition font-semibold text-gray-800 text-sm sm:text-base">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="btn-submit-hidden" class="hidden"></button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div id="checkout-floating-bar" class="fixed bottom-0 left-0 w-full z-[10070] pointer-events-none transform translate-y-full transition-transform duration-500 ease-out flex flex-col justify-end hidden">
+        <div class="w-full bg-gradient-to-t from-[#f3f4f6] via-[#f3f4f6]/95 to-transparent pt-8 px-4 flex justify-center" style="padding-bottom: calc(3vh + 16px + env(safe-area-inset-bottom)); pointer-events: none;">
+            <div id="btn-finalizar" class="relative flex items-center justify-between bg-white/95 backdrop-blur-xl rounded-2xl p-4 sm:p-5 shadow-[0_20px_40px_rgba(0,0,0,0.15)] border border-gray-200/50 pointer-events-auto w-full max-w-[340px] cursor-pointer active:scale-95 transition-transform" onclick="document.getElementById('btn-submit-hidden').click()">
+                <div class="flex flex-col text-left leading-none pointer-events-none select-none">
+                    <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5" id="label-floating-total">Total a Pagar</span>
+                    <span id="cart-total-floating" class="text-xl sm:text-2xl font-black text-gray-800 tracking-tight">R$ 0,00</span>
+                </div>
+                <div class="flex items-center gap-3 pointer-events-none select-none bg-green-50/80 px-4 py-2.5 rounded-xl border border-green-100 shadow-sm" id="btn-finalizar-estilo">
+                    <span class="text-sm sm:text-base font-bold text-success-green tracking-wide" id="txt-finalizar-btn">Finalizar</span>
+                    <div class="bg-gradient-to-br from-success-green to-green-600 text-white text-xs font-black rounded-lg w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center shadow-md">
+                        <i class="fas fa-check"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE RASTREIO (CLIENTE) -->
+    <div id="modal-rastreio" class="modal-wrapper flex items-center justify-center p-4 z-[10080]">
+        <div class="modal-overlay" onclick="fecharModal('modal-rastreio')"></div>
+        <div class="modal-content pb-0 bg-[#f3f4f6] w-full sm:w-[480px] rounded-[2.5rem] pt-6 sm:pt-7 shadow-2xl max-h-[90dvh] flex flex-col relative overflow-hidden">
+            <div class="flex justify-between items-center mb-2 px-6 shrink-0 w-full relative z-20">
+                <div class="flex flex-col text-left">
+                    <h2 class="text-2xl sm:text-3xl font-display tracking-wide uppercase italic gradient-text pb-1 -ml-0.5" style="transform: skewX(-8deg);">Seu Pedido</h2>
+                    <p class="text-[10px] sm:text-xs text-gray-500 font-bold uppercase tracking-wider" id="rastreio-status-texto">Acompanhe em tempo real</p>
+                </div>
+                <button type="button" onclick="fecharModal('modal-rastreio')" class="text-gray-400 hover:text-gray-800 bg-transparent text-xl w-8 h-8 flex items-center justify-center transition z-20"><i class="fas fa-times"></i></button>
+            </div>
+
+            <div id="rastreio-vazio" class="hidden flex-col items-center justify-center flex-1 px-6 pb-10 mt-10">
+                <div class="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mb-4 text-gray-400 shadow-inner">
+                    <i class="fas fa-box-open text-4xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Nenhum pedido rolando</h3>
+                <p class="text-sm text-gray-500 mb-8 text-center px-4">Você ainda não fez nenhum pedido hoje ou ele já foi entregue.</p>
+                <button onclick="fecharModal('modal-rastreio')" class="w-full gradient-bg text-white font-bold py-4 rounded-2xl shadow-lg hover:opacity-90 transition active:scale-95 text-base flex justify-center items-center gap-2 mb-3">
+                    <i class="fas fa-hamburger"></i> Fazer Meu Pedido
+                </button>
+                <button id="btn-repetir-vazio" onclick="repetirUltimoPedido()" class="hidden w-full bg-gradient-to-r from-gray-800 to-gray-900 text-white font-semibold py-4 rounded-2xl shadow-lg justify-center items-center gap-2 hover:opacity-90 transition active:scale-95 text-base">
+                    <i class="fas fa-redo"></i> Repetir Último Pedido
+                </button>
+            </div>
+
+            <div id="rastreio-ativo" class="flex-col flex-1 flex overflow-hidden relative">
+                <div id="rastreio-tabs" class="flex gap-2 overflow-x-auto px-6 mb-2 hidden custom-scroll shrink-0 pb-2"></div>
+                <div class="overflow-y-auto custom-scroll flex-1 px-6 pb-48 relative">
+                    <div class="relative pl-4 border-l-2 border-gray-100 ml-4 space-y-8 my-6" id="rastreio-timeline"></div>
+                    <div class="mt-8 mb-4 mx-2">
+                        <div class="w-full h-3 bg-repeat-x" style="background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMCIgaGVpZ2h0PSIxMCI+PHBvbHlnb24gcG9pbnRzPSIwLDEwIDUsMCAxMCwxMCIgZmlsbD0iI2ZkZmJmNyIvPjwvc3ZnPg==');"></div>
+                        <div class="bg-[#fdfbf7] px-5 py-4 shadow-sm font-mono text-gray-700 flex flex-col">
+                            <div class="text-center border-b-2 border-dashed border-gray-300 pb-3 mb-3">
+                                <h4 class="text-base font-bold uppercase tracking-widest text-black" data-brand-name>InstaLanches</h4>
+                                <p class="text-[10px] uppercase mt-0.5 font-bold">Cupom de Pedido</p>
+                            </div>
+                            <div class="flex justify-between items-center mb-3 text-xs font-bold border-b-2 border-dashed border-gray-300 pb-3">
+                                <span class="uppercase">Data e Hora:</span>
+                                <span class="font-black text-sm text-black" id="rastreio-previsao-hora">--:--</span>
+                            </div>
+                            <div class="pt-1 mb-3 border-b-2 border-dashed border-gray-300 pb-3">
+                                <div class="flex justify-between text-[10px] uppercase font-bold mb-2 text-gray-400">
+                                    <span>QTD DESCRIÇÃO</span>
+                                    <span>VALOR</span>
+                                </div>
+                                <div id="rastreio-resumo-itens" class="space-y-1"></div>
+                            </div>
+                            <div class="space-y-1 mb-3 border-b-2 border-dashed border-gray-300 pb-3">
+                                <div class="flex justify-between text-xs font-bold text-gray-600"><span class="uppercase">Subtotal</span><span id="rastreio-subtotal">--</span></div>
+                                <div class="flex justify-between text-xs font-bold text-gray-600"><span class="uppercase">Taxa de Entrega</span><span id="rastreio-taxa">--</span></div>
+                                <div class="flex justify-between text-sm font-black text-black mt-2 pt-1"><span class="uppercase">Total</span><span id="rastreio-total">--</span></div>
+                            </div>
+                            <div class="flex justify-between text-xs font-bold text-gray-600 mb-3"><span class="uppercase">Pagamento</span><span id="rastreio-pagamento" class="uppercase">--</span></div>
+                            <div class="border-t-2 border-dashed border-gray-300 pt-3 text-center"><p class="text-[10px] uppercase font-bold text-black">Obrigado pela preferência!</p></div>
+                        </div>
+                        <div class="w-full h-3 bg-repeat-x" style="background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMCIgaGVpZ2h0PSIxMCI+PHBvbHlnb24gcG9pbnRzPSIwLDAgNSwxMCAxMCwwIiBmaWxsPSIjZmRmYmY3Ii8+PC9zdmc+');"></div>
+                    </div>
+                </div>
+                <div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-[#f3f4f6] via-[#f3f4f6]/95 to-transparent pt-8 px-4 flex flex-col justify-end items-center z-30 gap-2.5" style="padding-bottom: calc(3vh + 16px + env(safe-area-inset-bottom));">
+                    <button id="btn-repetir-ativo" onclick="repetirUltimoPedido()" class="hidden relative items-center justify-center bg-gray-800 text-white rounded-2xl p-3.5 shadow-md pointer-events-auto w-full max-w-[340px] cursor-pointer active:scale-95 transition-transform text-sm font-bold border border-gray-700">
+                        <i class="fas fa-redo mr-2"></i> Repetir Último Pedido
+                    </button>
+                    <div class="relative flex items-center justify-center bg-white/95 backdrop-blur-xl rounded-2xl p-4 sm:p-5 shadow-[0_20px_40px_rgba(0,0,0,0.15)] border border-gray-200/50 pointer-events-auto w-full max-w-[340px] cursor-pointer active:scale-95 transition-transform" onclick="carregarRastreio()">
+                        <span class="text-sm sm:text-base font-black text-gray-800 tracking-wide flex items-center gap-2"><i class="fas fa-sync-alt text-insta-pink"></i> Atualizar Status</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Loja Fechada -->
+    <div id="modal-loja-fechada" class="modal-wrapper flex items-end sm:items-center justify-center">
+        <div class="modal-overlay" onclick="fecharModal('modal-loja-fechada')"></div>
+        <div class="modal-content pb-safe-modal bg-white w-full sm:w-[430px] rounded-t-[2.5rem] sm:rounded-[2.2rem] p-6 sm:p-7 shadow-2xl border border-insta-pink/10">
+            <div class="mx-auto w-20 h-20 rounded-full bg-gradient-to-br from-insta-pink/10 via-white to-insta-orange/20 border-4 border-white shadow-lg flex items-center justify-center -mt-16 mb-4">
+                <i class="fas fa-store-slash text-3xl text-insta-pink opacity-80"></i>
+            </div>
+            <div class="text-center">
+                <p class="text-[11px] uppercase tracking-[0.25em] text-gray-400 font-black mb-2">Atendimento</p>
+                <h3 id="titulo-loja-fechada" class="text-2xl font-bold text-gray-800">No momento estamos fechados</h3>
+                <p id="mensagem-loja-fechada" class="text-sm sm:text-base text-gray-500 leading-relaxed mt-4"></p>
+                <div class="mt-5 rounded-2xl bg-gradient-to-r from-insta-pink/5 via-insta-orange/10 to-insta-purple/5 border border-insta-pink/10 px-4 py-3">
+                    <p class="text-sm font-semibold text-gray-700" id="resumo-loja-fechada"></p>
+                </div>
+                <button onclick="fecharModal('modal-loja-fechada')" class="mt-6 w-full gradient-bg text-white font-bold py-3.5 rounded-2xl shadow-lg active:scale-95">Entendi 💖</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL LOGIN ADMIN MOBILE -->
+    <div id="modal-admin-auth" class="modal-wrapper flex items-center justify-center p-4 z-[10090]">
+        <div class="modal-overlay" onclick="fecharModal('modal-admin-auth')"></div>
+        <div class="modal-content bg-white w-[95%] sm:w-[400px] rounded-[2rem] p-6 shadow-2xl flex flex-col relative">
+            <button onclick="fecharModal('modal-admin-auth')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-800 bg-gray-100 rounded-full w-8 h-8 flex items-center justify-center transition"><i class="fas fa-times"></i></button>
+            <div class="text-center mb-6">
+                <i class="fas fa-user-shield text-4xl text-insta-pink mb-3"></i>
+                <h3 class="text-xl font-bold text-gray-800">Acesso Restrito</h3>
+            </div>
+            <input type="password" id="senha-admin-mobile" placeholder="Senha do painel" class="w-full bg-gray-50 border-2 border-gray-200 rounded-xl py-3 px-4 outline-none focus:border-insta-pink mb-4 text-center tracking-widest font-bold">
+            <button onclick="verificarSenhaAdminMobile()" class="w-full gradient-bg text-white font-bold py-3.5 rounded-xl shadow-lg active:scale-95">Aceder à Gestão</button>
+        </div>
+    </div>
+
+    
+<!-- MODAL ADMIN PANEL ERP -->
+    <div id="modal-admin-panel" class="modal-wrapper admin-modal-wrapper admin-erp-wrapper z-[10095]">
+        <div class="modal-overlay admin-modal-overlay" onclick="fecharModal('modal-admin-panel')"></div>
+        <div class="modal-content admin-panel-shell erp-shell">
+            <div id="admin-editor-scrim" class="admin-editor-scrim" onclick="adminCloseCurrentEditor(event)" aria-hidden="true"></div>
+            <aside class="admin-sidebar erp-sidebar">
+                <div class="admin-brand-card erp-brand">
+                    <div class="erp-brand-mark">
+                        <i class="fas fa-burger"></i>
+                    </div>
+                    <div>
+                        <p class="admin-eyebrow">ERP de vendas</p>
+                        <h3 data-brand-name>InstaLanches</h3>
+                        <span id="admin-sidebar-status" class="admin-live-pill"><i class="fas fa-circle"></i> Loja online</span>
+                    </div>
+                </div>
+
+                <div class="admin-ops-summary erp-ops-summary" aria-label="Resumo operacional">
+                    <div class="admin-ops-line">
+                        <span class="admin-ops-dot"></span>
+                        <div>
+                            <strong id="admin-side-mode">Operação direta</strong>
+                            <small>Canal próprio de vendas</small>
+                        </div>
+                    </div>
+                    <div class="admin-ops-line">
+                        <i class="fas fa-shield-halved"></i>
+                        <div>
+                            <strong>Sem comissão</strong>
+                            <small>Pedidos direto no seu fluxo</small>
+                        </div>
+                    </div>
+                </div>
+
+                <nav id="admin-tabs" class="admin-nav erp-nav" aria-label="Navegação do painel admin">
+                    <button type="button" data-admin-tab="admin-dashboard" onclick="mudarAbaAdmin('admin-dashboard', this)" class="admin-tab-btn admin-tab-active">
+                        <span class="admin-tab-ico"><i class="fas fa-chart-line"></i></span>
+                        <span><strong>Dashboard</strong><small>Visão geral</small></span>
+                    </button>
+                    <button type="button" data-admin-tab="admin-pedidos" onclick="mudarAbaAdmin('admin-pedidos', this)" class="admin-tab-btn">
+                        <span class="admin-tab-ico"><i class="fas fa-receipt"></i></span>
+                        <span><strong>Pedidos</strong><small>Fila e status</small></span>
+                    </button>
+                    <button type="button" data-admin-tab="admin-cardapio" onclick="mudarAbaAdmin('admin-cardapio', this)" class="admin-tab-btn">
+                        <span class="admin-tab-ico"><i class="fas fa-utensils"></i></span>
+                        <span><strong>Cardápio</strong><small>Produtos e fotos</small></span>
+                    </button>
+                    <button type="button" data-admin-tab="admin-promocoes" onclick="mudarAbaAdmin('admin-promocoes', this)" class="admin-tab-btn">
+                        <span class="admin-tab-ico"><i class="fas fa-tags"></i></span>
+                        <span><strong>Promoções</strong><small>Combos e ofertas</small></span>
+                    </button>
+                    <button type="button" data-admin-tab="admin-estoque" onclick="mudarAbaAdmin('admin-estoque', this)" class="admin-tab-btn">
+                        <span class="admin-tab-ico"><i class="fas fa-boxes-stacked"></i></span>
+                        <span><strong>Estoque</strong><small>Baixa e alertas</small></span>
+                    </button>
+                    <button type="button" data-admin-tab="admin-clientes" onclick="mudarAbaAdmin('admin-clientes', this)" class="admin-tab-btn">
+                        <span class="admin-tab-ico"><i class="fas fa-users"></i></span>
+                        <span><strong>Clientes</strong><small>Base própria</small></span>
+                    </button>
+                    <button type="button" data-admin-tab="admin-financeiro" onclick="mudarAbaAdmin('admin-financeiro', this)" class="admin-tab-btn">
+                        <span class="admin-tab-ico"><i class="fas fa-wallet"></i></span>
+                        <span><strong>Financeiro</strong><small>Vendas diretas</small></span>
+                    </button>
+                    <button type="button" data-admin-tab="admin-loja" onclick="mudarAbaAdmin('admin-loja', this)" class="admin-tab-btn">
+                        <span class="admin-tab-ico"><i class="fas fa-store"></i></span>
+                        <span><strong>Loja</strong><small>Funcionamento</small></span>
+                    </button>
+                    <button type="button" data-admin-tab="admin-estetica" onclick="mudarAbaAdmin('admin-estetica', this)" class="admin-tab-btn">
+                        <span class="admin-tab-ico"><i class="fas fa-palette"></i></span>
+                        <span><strong>Estética</strong><small>Marca e layouts</small></span>
+                    </button>
+                    <button type="button" data-admin-tab="admin-taxas" onclick="mudarAbaAdmin('admin-taxas', this)" class="admin-tab-btn">
+                        <span class="admin-tab-ico"><i class="fas fa-motorcycle"></i></span>
+                        <span><strong>Taxas</strong><small>Entrega</small></span>
+                    </button>
+                </nav>
+
+                <div class="admin-sidebar-footer erp-footer-note">
+                    <i class="fas fa-shield-halved"></i>
+                    <span>Operação direta, clientes próprios e menos dependência de marketplaces.</span>
+                </div>
+            </aside>
+
+            <main class="admin-main erp-main">
+                <header class="admin-topbar erp-topbar">
+                    <div class="admin-topbar-title">
+                        <p class="admin-eyebrow">Central de controle</p>
+                        <h2 id="admin-current-title">Dashboard</h2>
+                    </div>
+                    <div class="admin-topbar-actions">
+                        <button type="button" onclick="adminRefreshTudo()" class="admin-soft-btn">
+                            <i class="fas fa-rotate-right"></i>
+                            <span>Sincronizar</span>
+                        </button>
+                        <button type="button" onclick="fecharModal('modal-admin-panel')" class="admin-close-btn" aria-label="Fechar painel">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </header>
+
+                <div class="admin-mobile-tabs custom-scroll erp-mobile-tabs">
+                    <button type="button" data-admin-tab="admin-dashboard" onclick="mudarAbaAdmin('admin-dashboard', this)" class="admin-tab-btn admin-tab-active"><i class="fas fa-chart-line"></i><span>Home</span></button>
+                    <button type="button" data-admin-tab="admin-pedidos" onclick="mudarAbaAdmin('admin-pedidos', this)" class="admin-tab-btn"><i class="fas fa-receipt"></i><span>Pedidos</span></button>
+                    <button type="button" data-admin-tab="admin-cardapio" onclick="mudarAbaAdmin('admin-cardapio', this)" class="admin-tab-btn"><i class="fas fa-utensils"></i><span>Cardápio</span></button>
+                    <button type="button" data-admin-tab="admin-promocoes" onclick="mudarAbaAdmin('admin-promocoes', this)" class="admin-tab-btn"><i class="fas fa-tags"></i><span>Promoções</span></button>
+                    <button type="button" data-admin-tab="admin-estoque" onclick="mudarAbaAdmin('admin-estoque', this)" class="admin-tab-btn"><i class="fas fa-boxes-stacked"></i><span>Estoque</span></button>
+                    <button type="button" data-admin-tab="admin-clientes" onclick="mudarAbaAdmin('admin-clientes', this)" class="admin-tab-btn"><i class="fas fa-users"></i><span>Clientes</span></button>
+                    <button type="button" data-admin-tab="admin-financeiro" onclick="mudarAbaAdmin('admin-financeiro', this)" class="admin-tab-btn"><i class="fas fa-wallet"></i><span>Financeiro</span></button>
+                    <button type="button" data-admin-tab="admin-loja" onclick="mudarAbaAdmin('admin-loja', this)" class="admin-tab-btn"><i class="fas fa-store"></i><span>Loja</span></button>
+                    <button type="button" data-admin-tab="admin-estetica" onclick="mudarAbaAdmin('admin-estetica', this)" class="admin-tab-btn"><i class="fas fa-palette"></i><span>Estética</span></button>
+                    <button type="button" data-admin-tab="admin-taxas" onclick="mudarAbaAdmin('admin-taxas', this)" class="admin-tab-btn"><i class="fas fa-motorcycle"></i><span>Taxas</span></button>
+                </div>
+
+                <section class="admin-dashboard-grid erp-kpi-grid">
+                    <article class="admin-kpi-card erp-kpi-card">
+                        <div class="admin-kpi-icon"><i class="fas fa-fire"></i></div>
+                        <div><span id="admin-kpi-orders">0</span><small>Pedidos ativos</small></div>
+                    </article>
+                    <article class="admin-kpi-card erp-kpi-card">
+                        <div class="admin-kpi-icon"><i class="fas fa-sack-dollar"></i></div>
+                        <div><span id="admin-kpi-total">R$ 0,00</span><small>Total em aberto</small></div>
+                    </article>
+                    <article class="admin-kpi-card erp-kpi-card">
+                        <div class="admin-kpi-icon"><i class="fas fa-truck-fast"></i></div>
+                        <div><span id="admin-kpi-delivery">0</span><small>Entregas</small></div>
+                    </article>
+                    <article class="admin-kpi-card erp-kpi-card">
+                        <div class="admin-kpi-icon"><i class="fas fa-bag-shopping"></i></div>
+                        <div><span id="admin-kpi-pickup">0</span><small>Retiradas</small></div>
+                    </article>
+                </section>
+
+                <div class="admin-content-scroll custom-scroll erp-content">
+                    <section id="admin-dashboard" class="admin-tab-content block">
+                        <div class="admin-section-head">
+                            <div>
+                                <p class="admin-eyebrow">Visão executiva</p>
+                                <h4>Resumo do negócio</h4>
+                            </div>
+                            <button type="button" onclick="adminCarregarDashboard()" class="admin-primary-btn">
+                                <i class="fas fa-sync-alt"></i> Atualizar dashboard
+                            </button>
+                        </div>
+
+                        <div id="admin-dashboard-resumo" class="erp-dashboard-grid">
+                            <div class="admin-empty-state"><div><i class="fas fa-circle-notch fa-spin"></i><h5>Carregando indicadores...</h5><p>Buscando vendas, clientes e estoque.</p></div></div>
+                        </div>
+                    </section>
+
+                    <section id="admin-pedidos" class="admin-tab-content hidden">
+                        <div class="admin-section-head">
+                            <div>
+                                <p class="admin-eyebrow">Operação em tempo real</p>
+                                <h4>Pedidos em andamento</h4>
+                            </div>
+                            <button type="button" onclick="carregarPedidosMobile()" class="admin-primary-btn">
+                                <i class="fas fa-sync-alt"></i> Atualizar fila
+                            </button>
+                        </div>
+                        <div id="mobile-admin-pedidos-lista" class="admin-orders-list"></div>
+                    </section>
+
+                    <section id="admin-cardapio" class="admin-tab-content hidden">
+                        <div class="admin-section-head">
+                            <div>
+                                <p class="admin-eyebrow">Produtos, fotos e disponibilidade</p>
+                                <h4>Cardápio</h4>
+                            </div>
+                            <button type="button" onclick="adminAbrirFormularioProdutoNovo()" class="admin-soft-btn">
+                                <i class="fas fa-plus"></i> Novo produto
+                            </button>
+                        </div>
+
+                        <div class="erp-two-columns erp-crud-layout" id="admin-cardapio-layout">
+                            <form id="admin-produto-form-card" class="admin-card erp-form-card admin-crud-form admin-editor-panel hidden" onsubmit="salvarProdutoAdmin(event)">
+                                <div class="admin-card-title">
+                                    <span class="erp-form-icon"><i class="fas fa-image"></i></span>
+                                    <div>
+                                        <h5 id="admin-produto-form-title">Cadastrar produto</h5>
+                                        <p>Controle nome, preço, foto, destaque e estoque do item.</p>
+                                    </div>
+                                </div>
+
+                                <input type="hidden" id="admin-produto-id">
+                                <div class="erp-form-grid">
+                                    <label>Nome<input id="admin-produto-nome" class="admin-input" required placeholder="Ex: X-Burger"></label>
+                                    <label>Categoria<input id="admin-produto-categoria" class="admin-input" required placeholder="Ex: Hambúrgueres"></label>
+                                    <label>Preço<input id="admin-produto-preco" class="admin-input" type="number" step="0.01" min="0" required placeholder="0,00"></label>
+                                    <label>Preço promocional<input id="admin-produto-preco-promocional" class="admin-input" type="number" step="0.01" min="0" placeholder="Opcional"></label>
+                                </div>
+
+                                <label>Descrição<textarea id="admin-produto-descricao" class="admin-textarea" rows="3" placeholder="Descreva o produto para vender melhor"></textarea></label>
+
+                                <div class="erp-form-grid">
+                                    <div class="admin-upload-field">
+                                        <span class="admin-field-label">Imagem do produto</span>
+                                        <label for="admin-produto-imagem" class="admin-upload-box" id="admin-produto-upload-box">
+                                            <input id="admin-produto-imagem" class="admin-file-input" type="file" accept="image/*">
+                                            <span class="admin-upload-preview" id="admin-produto-upload-preview">
+                                                <i class="fas fa-cloud-arrow-up"></i>
+                                            </span>
+                                            <span class="admin-upload-copy">
+                                                <strong id="admin-produto-upload-title">Enviar foto do produto</strong>
+                                                <small id="admin-produto-upload-help">JPG, PNG ou WEBP. Toque para escolher.</small>
+                                            </span>
+                                        </label>
+                                    </div>
+                                    <label>URL da imagem<input id="admin-produto-imagem-url" class="admin-input" type="url" placeholder="Opcional"></label>
+                                    <label>Estoque atual<input id="admin-produto-estoque" class="admin-input" type="number" step="1" min="0" placeholder="0"></label>
+                                    <label>Estoque mínimo<input id="admin-produto-estoque-minimo" class="admin-input" type="number" step="1" min="0" placeholder="5"></label>
+                                </div>
+
+                                <div class="erp-check-row">
+                                    <label><input id="admin-produto-ativo" type="checkbox" checked> Produto ativo</label>
+                                    <label><input id="admin-produto-destaque" type="checkbox"> Destaque no cardápio</label>
+                                    <label><input id="admin-produto-controla-estoque" type="checkbox"> Controlar estoque</label>
+                                </div>
+
+                                <div class="erp-form-actions">
+                                    <button type="button" onclick="adminFecharFormularioProduto()" class="admin-soft-btn">Cancelar</button>
+                                    <button type="submit" class="admin-save-btn"><i class="fas fa-save"></i> Salvar produto</button>
+                                </div>
+                            </form>
+
+                            <div class="admin-card erp-list-card">
+                                <div class="erp-list-toolbar">
+                                    <div>
+                                        <h5>Produtos cadastrados</h5>
+                                        <p>Edite rapidamente foto, preço, status e estoque.</p>
+                                    </div>
+                                    <div class="admin-table-tools">
+                                        <label class="admin-search-field"><i class="fas fa-search"></i><input id="admin-produtos-search" type="search" placeholder="Buscar produto..."></label>
+                                        <select id="admin-produtos-filter" class="admin-mini-select">
+                                            <option value="todos">Todos</option>
+                                            <option value="ativos">Ativos</option>
+                                            <option value="pausados">Pausados</option>
+                                            <option value="sem_foto">Sem foto</option>
+                                            <option value="estoque">Com estoque baixo</option>
+                                        </select>
+                                        <button type="button" onclick="carregarAdminCardapio()" class="admin-soft-btn"><i class="fas fa-sync-alt"></i></button>
+                                    </div>
+                                </div>
+                                <div id="admin-lista-cardapio" class="admin-products-list admin-data-table"></div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section id="admin-promocoes" class="admin-tab-content hidden">
+                        <div class="admin-section-head">
+                            <div>
+                                <p class="admin-eyebrow">Ofertas e combos</p>
+                                <h4>Promoções</h4>
+                            </div>
+                            <button type="button" onclick="adminAbrirFormularioPromocaoNovo()" class="admin-soft-btn">
+                                <i class="fas fa-plus"></i> Nova promoção
+                            </button>
+                        </div>
+
+                        <div class="erp-two-columns erp-crud-layout" id="admin-promocoes-layout">
+                            <form id="admin-promocao-form-card" class="admin-card erp-form-card admin-crud-form admin-editor-panel hidden" onsubmit="salvarPromocaoAdmin(event)">
+                                <div class="admin-card-title">
+                                    <span class="erp-form-icon"><i class="fas fa-tags"></i></span>
+                                    <div>
+                                        <h5 id="admin-promocao-form-title">Criar promoção</h5>
+                                        <p>Monte ofertas com imagem, preço promocional e validade.</p>
+                                    </div>
+                                </div>
+
+                                <input type="hidden" id="admin-promocao-id">
+                                <div class="erp-form-grid">
+                                    <label>Título<input id="admin-promocao-titulo" class="admin-input" required placeholder="Ex: Combo Casal"></label>
+                                    <label>Produto relacionado<select id="admin-promocao-produto" class="admin-input"><option value="">Sem produto específico</option></select></label>
+                                    <label>Preço normal<input id="admin-promocao-preco-original" class="admin-input" type="number" step="0.01" min="0" placeholder="0,00"></label>
+                                    <label>Preço promocional<input id="admin-promocao-preco" class="admin-input" type="number" step="0.01" min="0" required placeholder="0,00"></label>
+                                </div>
+                                <label>Descrição<textarea id="admin-promocao-descricao" class="admin-textarea" rows="3" placeholder="Explique o benefício da promoção"></textarea></label>
+                                <div class="erp-form-grid">
+                                    <div class="admin-upload-field">
+                                        <span class="admin-field-label">Imagem da promoção</span>
+                                        <label for="admin-promocao-imagem" class="admin-upload-box" id="admin-promocao-upload-box">
+                                            <input id="admin-promocao-imagem" class="admin-file-input" type="file" accept="image/*">
+                                            <span class="admin-upload-preview" id="admin-promocao-upload-preview">
+                                                <i class="fas fa-cloud-arrow-up"></i>
+                                            </span>
+                                            <span class="admin-upload-copy">
+                                                <strong id="admin-promocao-upload-title">Enviar arte da promoção</strong>
+                                                <small id="admin-promocao-upload-help">Imagem horizontal ou quadrada fica melhor.</small>
+                                            </span>
+                                        </label>
+                                    </div>
+                                    <label>URL da imagem<input id="admin-promocao-imagem-url" class="admin-input" type="url" placeholder="Opcional"></label>
+                                    <label>Início<input id="admin-promocao-inicio" class="admin-input" type="datetime-local"></label>
+                                    <label>Fim<input id="admin-promocao-fim" class="admin-input" type="datetime-local"></label>
+                                </div>
+                                <div class="erp-check-row">
+                                    <label><input id="admin-promocao-ativo" type="checkbox" checked> Promoção ativa</label>
+                                    <label><input id="admin-promocao-destaque" type="checkbox" checked> Mostrar em destaque</label>
+                                </div>
+                                <div class="erp-form-actions">
+                                    <button type="button" onclick="adminFecharFormularioPromocao()" class="admin-soft-btn">Cancelar</button>
+                                    <button type="submit" class="admin-save-btn"><i class="fas fa-save"></i> Salvar promoção</button>
+                                </div>
+                            </form>
+
+                            <div class="admin-card erp-list-card">
+                                <div class="erp-list-toolbar">
+                                    <div>
+                                        <h5>Promoções cadastradas</h5>
+                                        <p>As ofertas aparecem na aba exclusiva do cliente.</p>
+                                    </div>
+                                    <div class="admin-table-tools">
+                                        <label class="admin-search-field"><i class="fas fa-search"></i><input id="admin-promocoes-search" type="search" placeholder="Buscar promoção..."></label>
+                                        <select id="admin-promocoes-filter" class="admin-mini-select">
+                                            <option value="todas">Todas</option>
+                                            <option value="ativas">Ativas</option>
+                                            <option value="pausadas">Pausadas</option>
+                                        </select>
+                                        <button type="button" onclick="carregarAdminPromocoes()" class="admin-soft-btn"><i class="fas fa-sync-alt"></i></button>
+                                    </div>
+                                </div>
+                                <div id="admin-lista-promocoes" class="admin-products-list admin-data-table"></div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section id="admin-estoque" class="admin-tab-content hidden">
+                        <div class="admin-section-head">
+                            <div>
+                                <p class="admin-eyebrow">Disponibilidade</p>
+                                <h4>Controle de estoque</h4>
+                            </div>
+                            <button type="button" onclick="carregarAdminEstoque()" class="admin-primary-btn"><i class="fas fa-sync-alt"></i> Atualizar estoque</button>
+                        </div>
+                        <div class="admin-info-card">
+                            <i class="fas fa-circle-info"></i>
+                            <p>Produtos com controle de estoque ficam indisponíveis automaticamente quando chegam a zero.</p>
+                        </div>
+                        <div id="admin-lista-estoque" class="erp-stock-list"></div>
+                    </section>
+
+                    <section id="admin-clientes" class="admin-tab-content hidden">
+                        <div class="admin-section-head">
+                            <div>
+                                <p class="admin-eyebrow">Base própria</p>
+                                <h4>Clientes</h4>
+                            </div>
+                            <button type="button" onclick="carregarAdminClientes()" class="admin-primary-btn"><i class="fas fa-sync-alt"></i> Atualizar clientes</button>
+                        </div>
+                        <div id="admin-lista-clientes" class="erp-client-list"></div>
+                    </section>
+
+                    <section id="admin-financeiro" class="admin-tab-content hidden">
+                        <div class="admin-section-head">
+                            <div>
+                                <p class="admin-eyebrow">Vendas diretas</p>
+                                <h4>Financeiro</h4>
+                            </div>
+                            <button type="button" onclick="carregarAdminFinanceiro()" class="admin-primary-btn"><i class="fas fa-sync-alt"></i> Atualizar financeiro</button>
+                        </div>
+                        <div id="admin-financeiro-resumo" class="erp-dashboard-grid"></div>
+                    </section>
+
+                    <section id="admin-loja" class="admin-tab-content hidden">
+                        <div class="admin-section-head">
+                            <div>
+                                <p class="admin-eyebrow">Atendimento</p>
+                                <h4>Status da loja</h4>
+                            </div>
+                        </div>
+
+                        <div class="admin-form-grid">
+                            <article class="admin-card admin-store-card">
+                                <div class="admin-card-title">
+                                    <span class="erp-form-icon"><i class="fas fa-door-open"></i></span>
+                                    <div>
+                                        <h5>Funcionamento</h5>
+                                        <p>Controle se a loja aceita pedidos agora.</p>
+                                    </div>
+                                </div>
+
+                                <div class="admin-radio-stack">
+                                    <label class="admin-radio-option">
+                                        <input type="radio" name="admin_loja_status" value="AUTO" class="peer sr-only">
+                                        <span class="admin-radio-mark"></span>
+                                        <span><strong>Horário automático</strong><small>Abre e fecha pelo horário padrão</small></span>
+                                    </label>
+                                    <label class="admin-radio-option">
+                                        <input type="radio" name="admin_loja_status" value="FORCAR_ABERTO" class="peer sr-only">
+                                        <span class="admin-radio-mark"></span>
+                                        <span><strong class="text-success-green">Forçar aberta</strong><small>Ignora o horário e aceita pedidos</small></span>
+                                    </label>
+                                    <label class="admin-radio-option">
+                                        <input type="radio" name="admin_loja_status" value="FORCAR_FECHADO" class="peer sr-only">
+                                        <span class="admin-radio-mark"></span>
+                                        <span><strong class="text-red-500">Forçar fechada</strong><small>Pausa os pedidos imediatamente</small></span>
+                                    </label>
+                                </div>
+                            </article>
+
+                            <article class="admin-card">
+                                <div class="admin-card-title">
+                                    <span class="erp-form-icon"><i class="fas fa-bullhorn"></i></span>
+                                    <div>
+                                        <h5>Letreiro dinâmico</h5>
+                                        <p>Mensagem de venda para o topo do cardápio.</p>
+                                    </div>
+                                </div>
+                                <textarea id="admin-banner-loja" rows="5" placeholder="Ex: Hoje temos promoção de X-Tudo!" class="admin-textarea"></textarea>
+                            </article>
+                        </div>
+
+                        <button type="button" onclick="salvarConfiguracoesLoja(this)" class="admin-save-btn">
+                            <i class="fas fa-save"></i> Guardar alterações
+                        </button>
+                    </section>
+
+                    <section id="admin-estetica" class="admin-tab-content hidden">
+                        <div class="admin-section-head">
+                            <div>
+                                <p class="admin-eyebrow">Identidade visual</p>
+                                <h4>Estética do cardápio</h4>
+                            </div>
+                            <button type="button" onclick="salvarEsteticaCardapioAdmin(this)" class="admin-primary-btn">
+                                <i class="fas fa-save"></i> Salvar estética
+                            </button>
+                        </div>
+
+                        <div class="admin-estetica-grid">
+                            <article class="admin-card admin-brand-editor-card">
+                                <div class="admin-card-title">
+                                    <span class="erp-form-icon"><i class="fas fa-signature"></i></span>
+                                    <div>
+                                        <h5>Marca da loja</h5>
+                                        <p>Altere o nome e a logo exibidos no cabeçalho, rodapé, painel e comprovantes.</p>
+                                    </div>
+                                </div>
+
+                                <div class="admin-brand-form-grid">
+                                    <div class="admin-logo-preview-card">
+                                        <div class="admin-logo-preview-frame">
+                                            <img id="admin-estetica-logo-preview" data-brand-logo src="https://res.cloudinary.com/de9bsqp2z/image/upload/v1773272375/logo_insta_lanches_instagram_transparente_rk9lxq.png" alt="Prévia da logo">
+                                        </div>
+                                        <label for="admin-estetica-logo-file" class="admin-logo-upload-btn">
+                                            <input id="admin-estetica-logo-file" type="file" accept="image/*">
+                                            <i class="fas fa-cloud-arrow-up"></i>
+                                            <span>Enviar nova logo</span>
+                                        </label>
+                                        <small>PNG transparente ou WEBP com fundo limpo fica melhor.</small>
+                                    </div>
+
+                                    <div class="admin-brand-fields">
+                                        <label>Nome da loja
+                                            <input id="admin-estetica-nome-loja" class="admin-input" placeholder="Ex: Burguer House">
+                                        </label>
+                                        <label>URL da logo
+                                            <input id="admin-estetica-logo-url" class="admin-input" type="url" placeholder="Cole uma URL ou envie uma imagem">
+                                        </label>
+                                        <label>Cor principal
+                                            <input id="admin-estetica-cor" class="admin-input admin-color-input" type="color" value="#d6249f">
+                                        </label>
+                                        <div class="admin-estetica-preview-strip">
+                                            <span>Prévia rápida</span>
+                                            <div class="admin-mini-menu-preview">
+                                                <span id="admin-estetica-preview-logo" class="admin-mini-logo">IL</span>
+                                                <strong id="admin-estetica-preview-nome">InstaLanches</strong>
+                                                <button type="button">Pedir</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </article>
+
+                            <article class="admin-card admin-layout-card">
+                                <div class="admin-card-title">
+                                    <span class="erp-form-icon"><i class="fas fa-layer-group"></i></span>
+                                    <div>
+                                        <h5>Interface do cardápio</h5>
+                                        <p>Escolha uma experiência visual para o cliente sem mexer no código.</p>
+                                    </div>
+                                </div>
+
+                                <div class="admin-layout-options" id="admin-layout-options">
+                                    <label class="admin-layout-option" data-layout-card="layout-01">
+                                        <input type="radio" name="admin_layout_cardapio" value="layout-01">
+                                        <span class="layout-thumb layout-thumb-01"><i></i><b></b><em></em></span>
+                                        <strong>Clássico premium</strong>
+                                        <small>Visual atual equilibrado.</small>
+                                    </label>
+                                    <label class="admin-layout-option" data-layout-card="layout-02">
+                                        <input type="radio" name="admin_layout_cardapio" value="layout-02">
+                                        <span class="layout-thumb layout-thumb-02"><i></i><b></b><em></em></span>
+                                        <strong>Compacto rápido</strong>
+                                        <small>Mais itens por tela.</small>
+                                    </label>
+                                    <label class="admin-layout-option" data-layout-card="layout-03">
+                                        <input type="radio" name="admin_layout_cardapio" value="layout-03">
+                                        <span class="layout-thumb layout-thumb-03"><i></i><b></b><em></em></span>
+                                        <strong>Foto destaque</strong>
+                                        <small>Imagem vende primeiro.</small>
+                                    </label>
+                                    <label class="admin-layout-option" data-layout-card="layout-04">
+                                        <input type="radio" name="admin_layout_cardapio" value="layout-04">
+                                        <span class="layout-thumb layout-thumb-04"><i></i><b></b><em></em></span>
+                                        <strong>Delivery app</strong>
+                                        <small>Próximo de app de pedido.</small>
+                                    </label>
+                                    <label class="admin-layout-option" data-layout-card="layout-05">
+                                        <input type="radio" name="admin_layout_cardapio" value="layout-05">
+                                        <span class="layout-thumb layout-thumb-05"><i></i><b></b><em></em></span>
+                                        <strong>Minimalista</strong>
+                                        <small>Leitura limpa e neutra.</small>
+                                    </label>
+                                    <label class="admin-layout-option" data-layout-card="layout-06">
+                                        <input type="radio" name="admin_layout_cardapio" value="layout-06">
+                                        <span class="layout-thumb layout-thumb-06"><i></i><b></b><em></em></span>
+                                        <strong>Catálogo claro</strong>
+                                        <small>Produtos como vitrine.</small>
+                                    </label>
+                                    <label class="admin-layout-option" data-layout-card="layout-07">
+                                        <input type="radio" name="admin_layout_cardapio" value="layout-07">
+                                        <span class="layout-thumb layout-thumb-07"><i></i><b></b><em></em></span>
+                                        <strong>Dark food</strong>
+                                        <small>Alto contraste noturno.</small>
+                                    </label>
+                                    <label class="admin-layout-option" data-layout-card="layout-08">
+                                        <input type="radio" name="admin_layout_cardapio" value="layout-08">
+                                        <span class="layout-thumb layout-thumb-08"><i></i><b></b><em></em></span>
+                                        <strong>Executivo</strong>
+                                        <small>Cardápio denso e direto.</small>
+                                    </label>
+                                    <label class="admin-layout-option" data-layout-card="layout-09">
+                                        <input type="radio" name="admin_layout_cardapio" value="layout-09">
+                                        <span class="layout-thumb layout-thumb-09"><i></i><b></b><em></em></span>
+                                        <strong>Neon suave</strong>
+                                        <small>Moderno sem exagero.</small>
+                                    </label>
+                                    <label class="admin-layout-option" data-layout-card="layout-10">
+                                        <input type="radio" name="admin_layout_cardapio" value="layout-10">
+                                        <span class="layout-thumb layout-thumb-10"><i></i><b></b><em></em></span>
+                                        <strong>Bistrô</strong>
+                                        <small>Mais elegante e editorial.</small>
+                                    </label>
+                                    <label class="admin-layout-option" data-layout-card="layout-11">
+                                        <input type="radio" name="admin_layout_cardapio" value="layout-11">
+                                        <span class="layout-thumb layout-thumb-11"><i></i><b></b><em></em></span>
+                                        <strong>Popular direto</strong>
+                                        <small>Preço e botão em evidência.</small>
+                                    </label>
+                                    <label class="admin-layout-option" data-layout-card="layout-12">
+                                        <input type="radio" name="admin_layout_cardapio" value="layout-12">
+                                        <span class="layout-thumb layout-thumb-12"><i></i><b></b><em></em></span>
+                                        <strong>Premium cards</strong>
+                                        <small>Espaçado e sofisticado.</small>
+                                    </label>
+                                </div>
+                            </article>
+                        </div>
+                    </section>
+
+                    <section id="admin-taxas" class="admin-tab-content hidden">
+                        <div class="admin-section-head">
+                            <div>
+                                <p class="admin-eyebrow">Logística</p>
+                                <h4>Taxas de entrega</h4>
+                            </div>
+                            <button type="button" onclick="adminAbrirFormularioTaxa()" class="admin-soft-btn">
+                                <i class="fas fa-plus"></i> Novo bairro
+                            </button>
+                        </div>
+
+                        <div id="admin-taxa-form-card" class="admin-card admin-fee-form admin-crud-form admin-editor-panel hidden">
+                            <div class="admin-card-title">
+                                <span class="erp-form-icon"><i class="fas fa-map-location-dot"></i></span>
+                                <div>
+                                    <h5 id="admin-taxa-form-title">Adicionar bairro</h5>
+                                    <p>Cadastre ou edite uma região de entrega.</p>
+                                </div>
+                            </div>
+                            <input type="hidden" id="nova-taxa-id">
+                            <div class="admin-fee-inputs">
+                                <label>Bairro<input type="text" id="nova-taxa-bairro" placeholder="Nome do bairro" class="admin-input"></label>
+                                <label>Valor da entrega<input type="number" id="nova-taxa-valor" step="0.01" min="0" placeholder="R$ 0,00" class="admin-input admin-money-input"></label>
+                            </div>
+                            <div class="erp-form-actions">
+                                <button type="button" onclick="adminFecharFormularioTaxa()" class="admin-soft-btn admin-fee-cancel-btn">
+                                    Cancelar
+                                </button>
+                                <button type="button" onclick="salvarTaxaAdmin(this)" class="admin-save-btn">
+                                    <i class="fas fa-save"></i> Salvar taxa
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="admin-card erp-list-card admin-taxas-table-card">
+                            <div class="erp-list-toolbar">
+                                <div>
+                                    <h5>Bairros cadastrados</h5>
+                                    <p>Controle regiões atendidas e valores de entrega.</p>
+                                </div>
+                                <div class="admin-table-tools">
+                                    <label class="admin-search-field"><i class="fas fa-search"></i><input id="admin-taxas-search" type="search" placeholder="Buscar bairro..."></label>
+                                    <button type="button" onclick="carregarAdminTaxas()" class="admin-soft-btn"><i class="fas fa-sync-alt"></i></button>
+                                </div>
+                            </div>
+                            <div id="admin-lista-taxas" class="admin-fees-list admin-data-table"></div>
+                        </div>
+                    </section>
+                </div>
+            </main>
+        </div>
+    </div>
+
+
+<!-- UPDATE DO TOAST -->
+    <div id="toast" class="fixed z-[100000] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2 sm:gap-3 opacity-0 pointer-events-none transition-all duration-300 scale-95 bg-gray-900/95 backdrop-blur-md text-white px-5 py-3.5 rounded-[2rem] shadow-[0_10px_25px_rgba(0,0,0,0.3)] border border-gray-700/50 max-w-[90vw] text-center">
+        <i id="toast-icon" class="fas fa-check-circle text-success-green text-xl shrink-0"></i>
+        <span id="toast-msg" class="font-bold text-xs sm:text-sm tracking-wide text-white break-words">Ação realizada!</span>
+    </div>
+
+
+    <script>
+        window.addEventListener('load', function () {
+            setTimeout(function () {
+                var container = document.getElementById('container-cardapio');
+                var modaisVisiveis = document.querySelectorAll('.modal-wrapper:not(.show)');
+                if (!window.__INSTALANCHES_APP_LOADED__ && container) {
+                    container.innerHTML = '<div class="text-center p-8"><i class="fas fa-exclamation-triangle text-4xl text-red-400 mb-3"></i><p class="text-red-500 font-bold">Arquivos do site não carregaram.</p><p class="text-xs text-gray-500 mt-2">Confira se a pasta assets foi enviada junto com o index.html.</p></div>';
+                }
+            }, 1200);
+        });
+    </script>
+
+    <script src="./assets/js/app.js?v=20260109"></script>
+</body>
+</html>
