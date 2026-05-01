@@ -1,65 +1,35 @@
-# Cardápio Online - Estrutura Reorganizada
+# Cardápio InstaLanches - versão corrigida para GitHub Pages
 
-Esta versão preserva o comportamento do `index.html` original, apenas separando responsabilidades em arquivos próprios.
+Estrutura de deploy:
 
-## Estrutura
+- `index.html`
+- `assets/css/app.css`
+- `assets/js/app.js`
+- `assets/js/config/tailwind.config.js`
+- `assets/js/core/viewport.js`
+- `assets/js/core/supabase.client.js`
 
-```txt
-index.html
-src/
-  styles/
-    app.css
-  js/
-    app.js
-    config/
-      tailwind.config.js
-    core/
-      viewport.js
-      supabase.client.js
-```
+Para publicar no GitHub Pages, envie o `index.html` e a pasta `assets` para a raiz do repositório.
 
-## O que foi preservado
-
-- HTML original, IDs, classes, modais e atributos `onclick`.
-- Tailwind via CDN.
-- Font Awesome via CDN.
-- Supabase JS via CDN.
-- Canvas Confetti via CDN.
-- Mesmas funções globais usadas pelo HTML.
-- Mesmo fluxo de cardápio, carrinho, checkout, rastreio e painel admin.
-
-## Como rodar
-
-Abra `index.html` em um servidor estático.
-
-Exemplo:
-
-```bash
-npx serve .
-```
-
-ou
-
-```bash
-python -m http.server 8000
-```
-
-Depois acesse:
-
-```txt
-http://localhost:8000
-```
-
-## Observação técnica
-
-Não foi feita migração para React/JSX nesta etapa porque isso alteraria a forma de renderização e aumentaria o risco de mudar comportamento. A separação atual é a etapa mais segura para começarmos as melhorias com base estável.
-
-
-## Supabase de teste
-
-Este pacote está apontando para:
+O site usa o projeto Supabase:
 
 - Project ID: `lqfwpfaqcnfsybxchmtg`
 - URL: `https://lqfwpfaqcnfsybxchmtg.supabase.co`
 
-Antes de abrir o site, rode o arquivo SQL `instalanches_seed_supabase.sql` no SQL Editor do Supabase.
+Correções desta versão:
+
+1. Caminhos de assets simplificados para `assets/...`.
+2. Query string `?v=20260101` para evitar cache antigo do navegador/GitHub Pages.
+3. CSS crítico mínimo no `index.html` para impedir que modais apareçam como conteúdo da página se o CSS externo falhar.
+4. Aplicação do status da loja logo ao carregar, mesmo antes da resposta do Supabase.
+5. Cliente Supabase exposto também em `window.supabaseClient`.
+
+
+## Atualização: Admin profissional responsivo
+
+Esta versão mantém o cardápio público intacto e atualiza somente o painel administrativo:
+- Layout desktop em tela ampla com sidebar, KPIs e área de operação.
+- Layout mobile full-screen com abas horizontais.
+- Cards profissionais para pedidos, produtos e taxas.
+- Melhorias visuais com sombras, profundidade e ícones 3D via CSS.
+- Mesmas funções e integrações Supabase preservadas.
